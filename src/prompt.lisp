@@ -12,16 +12,14 @@
   (signal! prompt-entry (tab-pressed)))
 
 (define-override (prompt-entry key-press-event) (ev)
-  (print "Key pressed")
-  (flet ((submit-event-p (ev) (or (= (q+:key ev) (q+:qt.key_enter))
-                                  (= (q+:key ev) (q+:qt.key_return)))))
-    (print (q+:key ev))
-    (cond
-      ((submit-event-p ev)
-       (signal! prompt-entry (return-pressed)))
-      (t
-       (call-next-qmethod)
-       (signal! prompt-entry (entry-changed))))))
+  (flet ((submit-event-p (ev)
+           (or (= (q+:key ev) (q+:qt.key_enter))
+               (= (q+:key ev) (q+:qt.key_return)))))
+    (cond ((submit-event-p ev)
+           (signal! prompt-entry (return-pressed)))
+          (t
+           (call-next-qmethod)
+           (signal! prompt-entry (entry-changed))))))
 
 (define-widget prompt (QWidget)
   ((message
@@ -48,14 +46,20 @@
 (define-subwidget (prompt entry-field) (make-instance 'prompt-entry)
   (setf (q+:text entry-field) (entry prompt)))
 
+(define-subwidget (prompt message-field) (q+:make-qlabel prompt)
+  (when (message prompt)
+    (setf (q+:text message-field) (message prompt))))
+
 (define-subwidget (prompt layout) (q+:make-qvboxlayout prompt)
+  (when (message prompt)
+    (q+:add-widget layout message-field))
   (q+:add-widget layout completion-list)
   (q+:add-widget layout entry-field))
 
 (define-slot (prompt enter) ()
   (declare (connected entry-field (return-pressed)))
-  (when (callback prompt))
-  (funcall (callback prompt) (entry prompt)))
+  (when (callback prompt)
+    (funcall (callback prompt) (entry prompt))))
 
 (defun next-trie (listwidget)
   (str:common-prefix
