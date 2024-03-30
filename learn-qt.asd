@@ -5,4 +5,5 @@
   :components ((:module "src"
                 :components ((:file "package")
                              (:file "counter")
+                             (:file "inspector")
                              (:file "prompt")))))
